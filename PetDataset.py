@@ -39,11 +39,10 @@ class PetDataset(Dataset):
         return len(self.img_files)
 
     def __getitem__(self, idx):
-        filename = os.path.splitext(self.img_files[idx])[0]
         img_path = os.path.join(self.img_dir, self.img_files[idx])
-        image = cv2.imread(img_path, cv2.IMREAD_COLOR)
+        image = self.transform(cv2.imread(img_path, cv2.IMREAD_COLOR))
 
-        labels = []
+        label = []
         f = open(self.label_file)
         for line in f.readlines():
             if self.img_files[idx] in line:
@@ -51,9 +50,8 @@ class PetDataset(Dataset):
                 x = int(split_string[1][2:])
                 y = int(split_string[2][1:-3])
                 label = [x,y]
-                labels += [label]
 
-        return image, labels
+        return image, label
 
     def __iter__(self):
         self.num = 0

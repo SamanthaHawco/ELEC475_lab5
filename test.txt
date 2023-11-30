@@ -1,0 +1,5 @@
+#CUDA Yes
+python test.py -cuda Y -b 16 -params "model_save.pth"
+
+#CUDA No
+python test.py -cuda N -b 16 -params "model_save.pth"

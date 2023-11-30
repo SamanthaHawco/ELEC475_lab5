@@ -50,7 +50,7 @@ if verbose:
 # Data Loaders
 transform = Compose([
     ToTensor(),
-    transforms.Resize((150,150))
+    transforms.Resize((128, 128), antialias=True)
 ])
 
 # training
@@ -58,7 +58,7 @@ train_dataset = PetDataset(img_dir='images', training=True, transform=transform)
 train_loader = DataLoader(dataset=train_dataset, batch_size=int(args.batch_size), shuffle=False)
 
 # validation
-val_dataset = PetDataset(img_dir='images', training=True, transform=transform)
+val_dataset = PetDataset(img_dir='images', training=False, transform=transform)
 val_loader = DataLoader(dataset=val_dataset, batch_size=int(args.batch_size), shuffle=False)
 
 
@@ -79,10 +79,10 @@ def train():
 
     # training flags for epoch saving/validation
     save_every_epoch = False
-    if (args.epoch_save == 'y' or args.epoch_save) == 'Y':
+    if (args.epoch_save == 'y' or args.epoch_save == 'Y'):
         save_every_epoch = True
     validate = False
-    if (args.epoch_save == 'y' or args.epoch_save) == 'Y':
+    if (args.validate == 'y' or args.validate == 'Y'):
         validate = True
 
     # set to training mode, send model to device
@@ -100,10 +100,15 @@ def train():
 
         # training
         model.train()
-        for imgs, labels in train_loader:
+        for imgs, (x_labels, y_labels) in train_loader:
+            #combine x and y labels
+            labels = torch.stack([x_labels, y_labels], dim=1).float()
+            #print(labels)
+
             imgs = imgs.squeeze().to(device=device)
             labels = labels.to(device=device)
             outputs = model(imgs)
+            #print(outputs)
 
             # calculate losses
             loss = loss_function(outputs, labels)
@@ -119,14 +124,15 @@ def train():
         model_scheduler.step()
 
         # validating
-        if validate:
+        if validate:       #run validation on every other epoch to reduce training time
             loss_val = 0
             model.eval()
             with torch.no_grad():
-                for imgs, labels in val_loader:
+                for imgs, (x_labels, y_labels) in val_loader:
+                    #combine x and y labels
+                    labels = torch.stack([x_labels, y_labels], dim=1).float()
                     imgs = imgs.squeeze().to(device=device)
                     labels = labels.to(device=device)
-                    labels = labels.long()
                     outputs = model(imgs)
 
                     # calculate losses

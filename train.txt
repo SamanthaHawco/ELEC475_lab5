@@ -1,1 +1,5 @@
+#CUDA Yes
 python train.py -e 40 -b 16 -s "model_save.pth" -p "loss.png" -cuda Y -epoch_save Y -val Y
+
+#CUDA No
+python train.py -e 40 -b 16 -s "model_save.pth" -p "loss.png" -cuda N -epoch_save N -val Y

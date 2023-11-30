@@ -23,7 +23,7 @@ class PetNet(nn.Module):
             nn.ReLU(),
             nn.Linear(64, 16),
             nn.ReLU(),
-            nn.Linear(16, 2),
+            nn.Linear(16, 2),   #ouput of 2 for x and y coordinates
             nn.ReLU()
         )
 

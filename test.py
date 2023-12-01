@@ -8,7 +8,6 @@ import os
 import torch
 from torchvision.transforms import Compose, Resize, ToTensor, ToPILImage, transforms
 from torch.utils.data import DataLoader
-from sklearn.metrics import confusion_matrix
 import model as net
 from PetDataset import PetDataset
 
@@ -32,7 +31,7 @@ os.makedirs(out_dir, exist_ok=True)
 trained_params = torch.load(args.params_file)
 resnet = torch.hub.load('pytorch/vision:v0.10.0', 'resnet18')
 model = net.PetNet(resnet)
-model.load_state_dict(trained_params)
+model.fc_layers.load_state_dict(trained_params)
 print('model loaded OK!')
 
 # Data Loaders
@@ -90,3 +89,6 @@ def test():
     print(f'Max Distance: {max_dist}')
     print(f'Standard Deviation of Distance: {std_dev_dist}')
 
+
+if __name__ == "__main__":
+    test()

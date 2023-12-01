@@ -55,7 +55,7 @@ transform = Compose([
 
 # training
 train_dataset = PetDataset(img_dir='images', training=True, transform=transform)
-train_loader = DataLoader(dataset=train_dataset, batch_size=int(args.batch_size), shuffle=False)
+train_loader = DataLoader(dataset=train_dataset, batch_size=int(args.batch_size), shuffle=True)
 
 # validation
 val_dataset = PetDataset(img_dir='images', training=False, transform=transform)
@@ -63,13 +63,13 @@ val_loader = DataLoader(dataset=val_dataset, batch_size=int(args.batch_size), sh
 
 
 # optimizer
-learning_rate = 1e-4
+learning_rate = 1e-3
 weight_decay = 1e-5
 model_optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
 # scheduler
-step_size = 7
-gamma = 0.1
+step_size = 4
+gamma = 0.8
 model_scheduler = torch.optim.lr_scheduler.StepLR(model_optimizer, step_size=step_size, gamma=gamma)
 
 # loss function
@@ -103,7 +103,6 @@ def train():
         for imgs, (x_labels, y_labels) in train_loader:
             #combine x and y labels
             labels = torch.stack([x_labels, y_labels], dim=1).float()
-            #print(labels)
 
             imgs = imgs.squeeze().to(device=device)
             labels = labels.to(device=device)

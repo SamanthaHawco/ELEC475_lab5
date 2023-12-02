@@ -6,6 +6,7 @@
 import os
 import cv2
 from torch.utils.data import Dataset
+import RescaleProcessor
 
 
 class PetDataset(Dataset):
@@ -45,11 +46,17 @@ class PetDataset(Dataset):
         label = []
         f = open(self.label_file)
         for line in f.readlines():
+            unscaled_dict = {}
             if self.img_files[idx] in line:
                 split_string = line.split(',')
                 x = int(split_string[1][2:])
                 y = int(split_string[2][1:-3])
-                label = [x,y]
+
+                # apply label scaling
+                unscaled_dict[self.img_files[idx]] = (x,y)
+                scaled_dict = RescaleProcessor.original_to_scaled(unscaled_dict)
+
+                label = list(scaled_dict[self.img_files[idx]])
 
         return image, label
 

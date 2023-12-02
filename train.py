@@ -55,7 +55,7 @@ transform = Compose([
 
 # training
 train_dataset = PetDataset(img_dir='images', training=True, transform=transform)
-train_loader = DataLoader(dataset=train_dataset, batch_size=int(args.batch_size), shuffle=True)
+train_loader = DataLoader(dataset=train_dataset, batch_size=int(args.batch_size), shuffle=False)
 
 # validation
 val_dataset = PetDataset(img_dir='images', training=False, transform=transform)
@@ -79,10 +79,10 @@ def train():
 
     # training flags for epoch saving/validation
     save_every_epoch = False
-    if (args.epoch_save == 'y' or args.epoch_save == 'Y'):
+    if args.epoch_save == 'y' or args.epoch_save == 'Y':
         save_every_epoch = True
     validate = False
-    if (args.validate == 'y' or args.validate == 'Y'):
+    if args.validate == 'y' or args.validate == 'Y':
         validate = True
 
     # set to training mode, send model to device
@@ -101,13 +101,13 @@ def train():
         # training
         model.train()
         for imgs, (x_labels, y_labels) in train_loader:
-            #combine x and y labels
+
+            # combine x and y labels
             labels = torch.stack([x_labels, y_labels], dim=1).float()
 
             imgs = imgs.squeeze().to(device=device)
             labels = labels.to(device=device)
             outputs = model(imgs)
-            #print(outputs)
 
             # calculate losses
             loss = loss_function(outputs, labels)

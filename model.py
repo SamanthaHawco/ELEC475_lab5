@@ -8,13 +8,15 @@ import torch.nn as nn
 
 class PetNet(nn.Module):
 
-    def __init__(self, resnet, fc = None):
+    def __init__(self, resnet, fc=None, pretrained=False):
         super(PetNet, self).__init__()
         self.resnet = resnet
 
-        # freeze resnet weights
-        for param in self.resnet.parameters():
-            param.requires_grad = False
+        if pretrained:  # freeze resnet weights if we do not want to train ResNet from scratch
+            for param in self.resnet.parameters():
+                param.requires_grad = False
+        else:  # randomize starting weights for non-pretrained ResNet model
+            self.init_resnet_weights(mean=0.0, std=0.01)
 
         self.fc_layers = fc
         if self.fc_layers is None:
@@ -25,14 +27,20 @@ class PetNet(nn.Module):
                 nn.ReLU(),
                 nn.Linear(64, 16),
                 nn.ReLU(),
-                nn.Linear(16, 2),  # ouput of 2 for x and y coordinates
+                nn.Linear(16, 2),  # output of 2 for x and y coordinates
                 nn.ReLU()
             )
-            self.init_frontend_weights(mean=0.0, std=0.01)
+            self.init_fc_weights(mean=0.0, std=0.01)
 
     def forward(self, X):
         return self.fc_layers(self.resnet(X))
 
-    def init_frontend_weights(self, mean, std):
+    def init_resnet_weights(self, mean, std):
+        for param in self.resnet.parameters():
+            nn.init.normal_(param, mean=mean, std=std)
+
+    def init_fc_weights(self, mean, std):
         for param in self.fc_layers.parameters():
             nn.init.normal_(param, mean=mean, std=std)
+
+

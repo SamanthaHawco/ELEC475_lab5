@@ -1,5 +1,5 @@
 #CUDA Yes
-python train.py -e 20 -b 8 -s "model_save.pth" -p "loss.png" -cuda Y -val Y
+python train.py -e 20 -b 8 -s "model_save.pth" -p "loss.png" -cuda Y -val Y -pretrained N
 
 #CUDA No
 python train.py -e 20 -b 8 -s "model_save.pth" -p "loss.png" -cuda N -epoch_save N -val Y -v Y

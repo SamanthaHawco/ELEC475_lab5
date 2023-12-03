@@ -1,2 +1,5 @@
-staffordshire_bull_terrier_121.jpg,"(70, 65)"
-pomeranian_6.jpg,"(95, 89)"
+staffordshire_bull_terrier_96.jpg,"(69, 63)"
+British_Shorthair_49.jpg,"(80, 73)"
+Sphynx_28.jpg,"(63, 58)"
+saint_bernard_106.jpg,"(49, 45)"
+scottish_terrier_153.jpg,"(64, 59)"

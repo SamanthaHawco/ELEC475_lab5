@@ -26,7 +26,7 @@ def show_pet_noses(test_file, output_file):
 
             # drawing circles for test data/prediction
             cv2.circle(imageScaled, test_noses[img], 8, (0, 255, 0), 1)
-            cv2.circle(imageScaled, output_noses[img], 8, (255, 0,  0), 1)
+            cv2.circle(imageScaled, output_noses[img], 8, (0, 0,  255), 1)
             cv2.imshow(img_file, imageScaled)
             key = cv2.waitKey(0)
             cv2.destroyWindow(img_file)

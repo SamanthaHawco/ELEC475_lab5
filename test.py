@@ -6,12 +6,12 @@
 import argparse
 import math
 import os
+import random
 
 import numpy
 import torch
 from torchvision.transforms import Compose, Resize, ToTensor, ToPILImage, transforms
 from torch.utils.data import DataLoader
-
 import FileDictIO
 import RescaleProcessor
 import model as net
@@ -23,6 +23,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-cuda', type=str, help='[y/N]')
 parser.add_argument('-b', "--batch_size", type=int, default=8, help='batch size for data loaders')
 parser.add_argument('-params', "--params_file", type=str, help='trained model file')
+parser.add_argument('-pretrained', "--pretrained", type=str, help='[y/N]')
 args = parser.parse_args()
 
 # device
@@ -30,15 +31,24 @@ device = torch.device('cpu')
 if (args.cuda == 'y' or args.cuda == 'Y') and torch.cuda.is_available():
     device = torch.device('cuda')
 
+# pretrained:
+pretrained = False
+if args.pretrained == 'y' or args.pretrained == 'Y':
+    pretrained = True
+
 # set output directory
 out_dir = './output/'
 os.makedirs(out_dir, exist_ok=True)
 
 # model
-trained_params = torch.load(args.params_file)
-resnet = torch.hub.load('pytorch/vision:v0.10.0', 'resnet18', pretrained=True)
+resnet = torch.hub.load('pytorch/vision:v0.10.0', 'resnet18', pretrained=pretrained)
 model = net.PetNet(resnet)
-model.fc_layers.load_state_dict(trained_params)
+trained_params = torch.load(args.params_file)
+if pretrained:
+    model.fc_layers.load_state_dict(trained_params)
+else:
+    model.load_state_dict(trained_params)
+
 print('model loaded OK!')
 
 # Data Loaders
@@ -50,7 +60,6 @@ transform = Compose([
 # testing data
 testset = PetDataset(img_dir='images', training=False, transform=transform)
 test_loader = DataLoader(dataset=testset, batch_size=int(args.batch_size), shuffle=False)
-
 
 def test():
     model.eval()
@@ -84,6 +93,7 @@ def test():
                 x2 = outputs[i].data[0].item()
                 y2 = outputs[i].data[1].item()
 
+                all_labels.append((x1, y1))
                 all_outputs.append((x2, y2))
 
                 # threshold calc
@@ -95,24 +105,35 @@ def test():
                 e_dist = math.sqrt(((x2 - x1) ** 2 + (y2 - y1) ** 2))  # eucliden distance
                 distances += [e_dist]
 
+    # pick 5 random images to show output for
+    random_idx = []
+    for i in range (0,5):
+        idx = random.randint(0, len(all_labels))
+        random_idx += [idx]
+
+    print(random_idx)
+
     # generate .txts for visualization
     l_output_dict = {}
     o_output_dict = {}
-    for i in range(0, labels.size(0)):
+
+    for idx in random_idx:
+
         # Label = (x1, y1)
-        x1 = int(labels[i].data[0].item())
-        y1 = int(labels[i].data[1].item())
+        label = (int(all_labels[idx][0]), int(all_labels[idx][1]))
 
         # Output = (x2, y2)
-        x2 = int(outputs[i].data[0].item())
-        y2 = int(outputs[i].data[1].item())
+        output = (int(all_outputs[idx][0]), int(all_outputs[idx][1]))
 
         # get image that is going to be visualized
-        img = FileDictIO.get_image_from_coord((x1, y1), 'downscaled_test_noses.txt')
+        img = FileDictIO.get_image_from_coord(label, 'downscaled_test_noses.txt')
 
         # generate dict entry and add to dict
-        l_output_dict[img] = (x1, y1)
-        o_output_dict[img] = (x2, y2)
+        l_output_dict[img] = label
+        o_output_dict[img] = output
+
+    print(l_output_dict)
+    print(o_output_dict)
 
     # write subset of labels to file
     FileDictIO.dict_to_file(l_output_dict, 'downscaled_visualizations_test.txt')

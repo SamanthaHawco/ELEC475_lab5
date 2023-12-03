@@ -5,6 +5,7 @@
 # imports
 import argparse
 import datetime
+import math
 import os
 import torch.optim
 import torch.nn as nn
@@ -26,6 +27,7 @@ parser.add_argument('-cuda', type=str, help='[y/N]')
 parser.add_argument('-v', "--verbose", type=str, help='[y/N]')
 parser.add_argument('-epoch_save', type=str, help='[y/N]')
 parser.add_argument('-val', "--validate", type=str, help='[y/N]')
+parser.add_argument('-pretrained', "--pretrained", type=str, help='[y/N]')
 args = parser.parse_args()
 
 # generate .txt files for scaled values
@@ -50,12 +52,17 @@ device = torch.device('cpu')
 if (args.cuda == 'y' or args.cuda == 'Y') and torch.cuda.is_available():
     device = torch.device('cuda')
 
+# pretrained
+pretrained = False
+if args.pretrained == 'y' or args.pretrained == 'Y':
+    pretrained = True
+
 if verbose:
     print(f'Device: {device}')
 
 # model
-resnet = torch.hub.load('pytorch/vision:v0.10.0', 'resnet18', pretrained=True)
-model = net.PetNet(resnet)
+resnet = torch.hub.load('pytorch/vision:v0.10.0', 'resnet18', pretrained=pretrained)
+model = net.PetNet(resnet, pretrained=pretrained)
 
 if verbose:
     print(f'Model Loaded!')
@@ -81,7 +88,7 @@ model_optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_
 
 # scheduler
 step_size = 7
-gamma = 0.1
+gamma = 0.8
 model_scheduler = torch.optim.lr_scheduler.StepLR(model_optimizer, step_size=step_size, gamma=gamma)
 
 # loss function
@@ -129,7 +136,7 @@ def train():
             loss.backward()
             model_optimizer.step()
 
-        epoch_losses_train += [loss_train/n_batches_train]
+        epoch_losses_train += [loss_train/len(train_loader)]
         print(f'Training Epoch {epoch} Loss: {epoch_losses_train[epoch - 1]}')
         model_scheduler.step()
 
@@ -149,7 +156,7 @@ def train():
                     loss = loss_function(outputs, labels)
                     loss_val += loss.item()
 
-            epoch_losses_val += [loss_val / n_batches_val]
+            epoch_losses_val += [loss_val /len(val_loader)]
             print(f'Validation Epoch {epoch} Loss: {epoch_losses_val[epoch - 1]}')
 
         if save_every_epoch:  # saving temporary model files and loss plots
@@ -163,7 +170,10 @@ def train():
             # save temp model
             try:
                 temp_model_path = model_folder_dir + '/' + args.fc_output[:-4] + '_epoch' + str(epoch) + '.pth'
-                torch.save(model.fc_layers.state_dict(), temp_model_path)
+                if pretrained:
+                    torch.save(model.state_dict(), temp_model_path)
+                else:
+                    torch.save(model.fc_layers.state_dict(), temp_model_path)
                 if verbose:
                     print(f'Saved model for epoch {epoch} @{temp_model_path}')
             except:
@@ -192,7 +202,11 @@ def train():
             print('\n')
 
     # save final frontend model
-    torch.save(model.fc_layers.state_dict(), args.fc_output)
+
+    if pretrained:
+        torch.save(model.fc_layers.state_dict(), args.fc_output)  # save only fc layers if we're using pretrained ResNet
+    else:
+        torch.save(model.state_dict(), args.fc_output)  # save whole model if not using pretrained ResNet
 
     if validate:
         generate_loss_plot_with_val(epoch_losses_train, epoch_losses_val, args.loss_plot, show_plot=True)

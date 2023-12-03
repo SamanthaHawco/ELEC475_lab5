@@ -2,4 +2,4 @@
 python test.py -cuda Y -b 8 -params "model_save.pth" -pretrained N
 
 #CUDA No
-python test.py -cuda N -b 16 -params "model_save.pth"
+python test.py -cuda N -b 8 -params "model_save.pth" -pretrained N

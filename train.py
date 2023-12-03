@@ -11,6 +11,8 @@ import torch.nn as nn
 from torchvision.transforms import Compose, Resize, ToTensor, ToPILImage, transforms
 from matplotlib import pyplot as plt
 from torch.utils.data import DataLoader as DataLoader
+import FileDictIO
+import RescaleProcessor
 import model as net
 from PetDataset import PetDataset
 
@@ -25,6 +27,18 @@ parser.add_argument('-v', "--verbose", type=str, help='[y/N]')
 parser.add_argument('-epoch_save', type=str, help='[y/N]')
 parser.add_argument('-val', "--validate", type=str, help='[y/N]')
 args = parser.parse_args()
+
+# generate .txt files for scaled values
+
+# train file
+unscaled_train_dict = FileDictIO.file_to_dict('train_noses.2.txt')
+scaled_train_dict = RescaleProcessor.original_to_scaled(unscaled_train_dict)
+FileDictIO.dict_to_file(scaled_train_dict, 'downscaled_train_noses.2.txt')
+
+# test file
+unscaled_test_dict = FileDictIO.file_to_dict('test_noses.txt')
+scaled_test_dict = RescaleProcessor.original_to_scaled(unscaled_test_dict)
+FileDictIO.dict_to_file(scaled_test_dict, 'downscaled_test_noses.txt')
 
 # verbosity
 verbose = False

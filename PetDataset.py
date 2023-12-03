@@ -45,8 +45,8 @@ class PetDataset(Dataset):
 
         label = []
         f = open(self.label_file)
+        unscaled_dict = {}
         for line in f.readlines():
-            unscaled_dict = {}
             if self.img_files[idx] in line:
                 split_string = line.split(',')
                 x = int(split_string[1][2:])

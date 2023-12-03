@@ -39,9 +39,8 @@ if (args.cuda == 'y' or args.cuda == 'Y') and torch.cuda.is_available():
 if verbose:
     print(f'Device: {device}')
 
-
 # model
-resnet = torch.hub.load('pytorch/vision:v0.10.0', 'resnet18')
+resnet = torch.hub.load('pytorch/vision:v0.10.0', 'resnet18', pretrained=True)
 model = net.PetNet(resnet)
 
 if verbose:
@@ -61,22 +60,21 @@ train_loader = DataLoader(dataset=train_dataset, batch_size=int(args.batch_size)
 val_dataset = PetDataset(img_dir='images', training=False, transform=transform)
 val_loader = DataLoader(dataset=val_dataset, batch_size=int(args.batch_size), shuffle=False)
 
-
 # optimizer
-learning_rate = 1e-3
+learning_rate = 1e-4
 weight_decay = 1e-5
 model_optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
 # scheduler
-step_size = 4
-gamma = 0.8
+step_size = 7
+gamma = 0.1
 model_scheduler = torch.optim.lr_scheduler.StepLR(model_optimizer, step_size=step_size, gamma=gamma)
 
 # loss function
 loss_function = nn.MSELoss()
 
-def train():
 
+def train():
     # training flags for epoch saving/validation
     save_every_epoch = False
     if args.epoch_save == 'y' or args.epoch_save == 'Y':
@@ -91,17 +89,16 @@ def train():
     epoch_losses_val = []
 
     # calculate number of batches
-    n_batches_train = len(train_loader)/args.batch_size
-    n_batches_val = len(val_loader)/args.batch_size
+    n_batches_train = len(train_loader) / args.batch_size
+    n_batches_val = len(val_loader) / args.batch_size
 
-    for epoch in range(1, args.epochs+1):
+    for epoch in range(1, args.epochs + 1):
         print(f'Epoch #{epoch}, Start Time: {datetime.datetime.now()}')
         loss_train = 0
 
         # training
         model.train()
         for imgs, (x_labels, y_labels) in train_loader:
-
             # combine x and y labels
             labels = torch.stack([x_labels, y_labels], dim=1).float()
 
@@ -118,17 +115,17 @@ def train():
             loss.backward()
             model_optimizer.step()
 
-        epoch_losses_train += [loss_train / n_batches_train]
+        epoch_losses_train += [loss_train/n_batches_train]
         print(f'Training Epoch {epoch} Loss: {epoch_losses_train[epoch - 1]}')
         model_scheduler.step()
 
         # validating
-        if validate:       #run validation on every other epoch to reduce training time
+        if validate:  # run validation on every other epoch to reduce training time
             loss_val = 0
             model.eval()
             with torch.no_grad():
                 for imgs, (x_labels, y_labels) in val_loader:
-                    #combine x and y labels
+                    # combine x and y labels
                     labels = torch.stack([x_labels, y_labels], dim=1).float()
                     imgs = imgs.squeeze().to(device=device)
                     labels = labels.to(device=device)
@@ -138,7 +135,7 @@ def train():
                     loss = loss_function(outputs, labels)
                     loss_val += loss.item()
 
-            epoch_losses_val += [loss_val/n_batches_val]
+            epoch_losses_val += [loss_val / n_batches_val]
             print(f'Validation Epoch {epoch} Loss: {epoch_losses_val[epoch - 1]}')
 
         if save_every_epoch:  # saving temporary model files and loss plots
@@ -195,8 +192,8 @@ def train():
     print('#########################################\n')
 
 
-def generate_loss_plot(loss, file_loc, show_plot=False): # loss plot without validation
-    epochs = list(range(1, len(loss)+1))
+def generate_loss_plot(loss, file_loc, show_plot=False):  # loss plot without validation
+    epochs = list(range(1, len(loss) + 1))
     plt.plot(epochs, loss)
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
@@ -207,10 +204,10 @@ def generate_loss_plot(loss, file_loc, show_plot=False): # loss plot without val
     plt.close()
 
 
-def generate_loss_plot_with_val(train_loss, val_loss, file_loc, show_plot=False): # loss plot with validation
-    epochs = list(range(1, len(train_loss)+1))
-    plt.plot(epochs, train_loss, label = "Training Loss")
-    plt.plot(epochs, val_loss, label= "Validation Loss")
+def generate_loss_plot_with_val(train_loss, val_loss, file_loc, show_plot=False):  # loss plot with validation
+    epochs = list(range(1, len(train_loss) + 1))
+    plt.plot(epochs, train_loss, label="Training Loss")
+    plt.plot(epochs, val_loss, label="Validation Loss")
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.title('Epoch vs Loss')

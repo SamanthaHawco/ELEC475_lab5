@@ -52,7 +52,7 @@ class PetDataset(Dataset):
                 x = int(split_string[1][2:])
                 y = int(split_string[2][1:-3])
 
-                # apply label scaling
+                # apply label scaling (for downscaling to 128x128 image)
                 unscaled_dict[self.img_files[idx]] = (x,y)
                 scaled_dict = RescaleProcessor.original_to_scaled(unscaled_dict)
 

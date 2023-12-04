@@ -1,17 +1,20 @@
+# ELEC475 Lab 5
+# Nicholas Chivaran - 18nc34
+# Samantha Hawco - 18srh5
 
+# imports
 import csv
 import os
 import cv2
 from tkinter import *
 from tkinter.filedialog import askopenfilename
-
 import FileDictIO
 
 scale = 1
 
+
 # generate visualizations of test data and corresponding model output
 def show_pet_noses(test_file, output_file):
-
     test_noses = FileDictIO.file_to_dict(test_file)
     output_noses = FileDictIO.file_to_dict(output_file)
 
@@ -26,7 +29,7 @@ def show_pet_noses(test_file, output_file):
 
             # drawing circles for test data/prediction
             cv2.circle(imageScaled, test_noses[img], 8, (0, 255, 0), 1)
-            cv2.circle(imageScaled, output_noses[img], 8, (0, 0,  255), 1)
+            cv2.circle(imageScaled, output_noses[img], 8, (0, 0, 255), 1)
             cv2.imshow(img_file, imageScaled)
             key = cv2.waitKey(0)
             cv2.destroyWindow(img_file)
@@ -40,7 +43,7 @@ if __name__ == '__main__':
     root = Tk()
     root.withdraw()
     root.attributes('-topmost', True)
-    labels_file = askopenfilename(filetypes = [("Text files","*.txt")])
+    labels_file = askopenfilename(filetypes=[("Text files", "*.txt")])
     path = os.path.dirname(labels_file)
     root.destroy()
 
@@ -65,6 +68,3 @@ if __name__ == '__main__':
                 cv2.destroyWindow(noseImageFile)
                 if key == ord('q'):
                     exit(0)
-
-
-

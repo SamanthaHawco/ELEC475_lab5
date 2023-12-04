@@ -5,7 +5,6 @@
 # imports
 import argparse
 import datetime
-import math
 import os
 import torch.optim
 import torch.nn as nn
@@ -27,10 +26,10 @@ parser.add_argument('-cuda', type=str, help='[y/N]')
 parser.add_argument('-v', "--verbose", type=str, help='[y/N]')
 parser.add_argument('-epoch_save', type=str, help='[y/N]')
 parser.add_argument('-val', "--validate", type=str, help='[y/N]')
-parser.add_argument('-pretrained', "--pretrained", type=str, help='[y/N]')
+parser.add_argument('-pretrained', type=str, help='[y/N]')
 args = parser.parse_args()
 
-# generate .txt files for scaled values
+# generate .txt files for downscaled labels
 
 # train file
 unscaled_train_dict = FileDictIO.file_to_dict('train_noses.2.txt')
@@ -42,17 +41,17 @@ unscaled_test_dict = FileDictIO.file_to_dict('test_noses.txt')
 scaled_test_dict = RescaleProcessor.original_to_scaled(unscaled_test_dict)
 FileDictIO.dict_to_file(scaled_test_dict, 'downscaled_test_noses.txt')
 
-# verbosity
+# verbosity flag
 verbose = False
 if args.verbose == 'y' or args.verbose == 'Y':
     verbose = True
 
-# device
+# device flag
 device = torch.device('cpu')
 if (args.cuda == 'y' or args.cuda == 'Y') and torch.cuda.is_available():
     device = torch.device('cuda')
 
-# pretrained
+# pretrained flag
 pretrained = False
 if args.pretrained == 'y' or args.pretrained == 'Y':
     pretrained = True
@@ -65,7 +64,7 @@ resnet = torch.hub.load('pytorch/vision:v0.10.0', 'resnet18', pretrained=pretrai
 model = net.PetNet(resnet, pretrained=pretrained)
 
 if verbose:
-    print(f'Model Loaded!')
+    print(f'Model Loaded OK!')
 
 # Data Loaders
 transform = Compose([
@@ -87,7 +86,7 @@ weight_decay = 1e-5
 model_optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
 # scheduler
-step_size = 7
+step_size = 15
 gamma = 0.8
 model_scheduler = torch.optim.lr_scheduler.StepLR(model_optimizer, step_size=step_size, gamma=gamma)
 
@@ -96,6 +95,7 @@ loss_function = nn.MSELoss()
 
 
 def train():
+
     # training flags for epoch saving/validation
     save_every_epoch = False
     if args.epoch_save == 'y' or args.epoch_save == 'Y':
@@ -109,10 +109,6 @@ def train():
     epoch_losses_train = []
     epoch_losses_val = []
 
-    # calculate number of batches
-    n_batches_train = len(train_loader) / args.batch_size
-    n_batches_val = len(val_loader) / args.batch_size
-
     for epoch in range(1, args.epochs + 1):
         print(f'Epoch #{epoch}, Start Time: {datetime.datetime.now()}')
         loss_train = 0
@@ -120,9 +116,11 @@ def train():
         # training
         model.train()
         for imgs, (x_labels, y_labels) in train_loader:
+
             # combine x and y labels
             labels = torch.stack([x_labels, y_labels], dim=1).float()
 
+            # send imgs to model for processing
             imgs = imgs.squeeze().to(device=device)
             labels = labels.to(device=device)
             outputs = model(imgs)
@@ -141,13 +139,16 @@ def train():
         model_scheduler.step()
 
         # validating
-        if validate:  # run validation on every other epoch to reduce training time
+        if validate:
             loss_val = 0
             model.eval()
             with torch.no_grad():
                 for imgs, (x_labels, y_labels) in val_loader:
+
                     # combine x and y labels
                     labels = torch.stack([x_labels, y_labels], dim=1).float()
+
+                    # send imgs to model for processing
                     imgs = imgs.squeeze().to(device=device)
                     labels = labels.to(device=device)
                     outputs = model(imgs)
@@ -159,9 +160,10 @@ def train():
             epoch_losses_val += [loss_val /len(val_loader)]
             print(f'Validation Epoch {epoch} Loss: {epoch_losses_val[epoch - 1]}')
 
-        if save_every_epoch:  # saving temporary model files and loss plots
+        if save_every_epoch:  # saving temporary model files and loss plots if necessary
 
-            # FC Layers
+            # MODEL
+
             # create root directory if not there already
             model_folder_dir = './temp_models'
             if not os.path.isdir(model_folder_dir):
@@ -202,12 +204,12 @@ def train():
             print('\n')
 
     # save final frontend model
+    if pretrained:  # save only FC layers if we're using pretrained ResNet
+        torch.save(model.fc_layers.state_dict(), args.fc_output)
+    else:  # save whole model if not using pretrained ResNet
+        torch.save(model.state_dict(), args.fc_output)
 
-    if pretrained:
-        torch.save(model.fc_layers.state_dict(), args.fc_output)  # save only fc layers if we're using pretrained ResNet
-    else:
-        torch.save(model.state_dict(), args.fc_output)  # save whole model if not using pretrained ResNet
-
+    # generate and show loss plots
     if validate:
         generate_loss_plot_with_val(epoch_losses_train, epoch_losses_val, args.loss_plot, show_plot=True)
     else:

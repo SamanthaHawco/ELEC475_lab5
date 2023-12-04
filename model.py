@@ -12,7 +12,7 @@ class PetNet(nn.Module):
         super(PetNet, self).__init__()
         self.resnet = resnet
 
-        if pretrained:  # freeze resnet weights if we do not want to train ResNet from scratch
+        if pretrained:  # freeze ResNet weights if we do not want to train ResNet from scratch
             for param in self.resnet.parameters():
                 param.requires_grad = False
         else:  # randomize starting weights for non-pretrained ResNet model

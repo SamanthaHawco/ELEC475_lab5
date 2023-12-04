@@ -2,10 +2,9 @@
 # Nicholas Chivaran - 18nc34
 # Samantha Hawco - 18srh5
 
-import json
+# imports
 import csv
 import os
-import argparse
 import cv2
 from tkinter import Tk, filedialog
 
@@ -15,6 +14,7 @@ image_filename = None
 clone = None
 ptSelected = None
 scale = None
+
 
 def click_and_pick(event, x, y, flags, param):
     # grab references to the global variables
@@ -46,6 +46,7 @@ def click_and_pick(event, x, y, flags, param):
         dim = (int(image.shape[1] * scale), int(image.shape[0] * scale))
         imageScaled = cv2.resize(image, dim, interpolation=cv2.INTER_AREA)
         cv2.imshow(image_filename, imageScaled)
+
 
 def main():
 
@@ -141,6 +142,7 @@ def main():
                 {'image': noseList[idx][0], 'nose': noseList[idx][1]})
 
 # ------------------------------------------------------------------------------------------------------------------
+
 
 if __name__ == '__main__':
 

@@ -2,6 +2,7 @@
 # Nicholas Chivaran - 18nc34
 # Samantha Hawco - 18srh5
 
+# imports
 import cv2
 import FileDictIO
 
@@ -10,6 +11,7 @@ import FileDictIO
 def original_to_scaled(input_dict, new_size=(128, 128)):
     scaled_dict = {}
     for key in input_dict.keys():
+
         # calculating scaling factor
         img = cv2.imread('images/' + key)
         img_dim = (img.shape[1], img.shape[0])
@@ -25,13 +27,14 @@ def original_to_scaled(input_dict, new_size=(128, 128)):
     return scaled_dict
 
 
-# upscales input dictionary (AxA) labels to original image size NxM image
+# upscales input dictionary (AxA) labels to original image size (NxM) image
 def scaled_to_original(input_file, old_size=(128, 128)):
 
     input_dict = FileDictIO.file_to_dict(input_file)
 
     scaled_dict = {}
     for key in input_dict.keys():
+
         # calculating scaling factor
         img = cv2.imread('images/' + key)
         img_dim = (img.shape[1], img.shape[0])
@@ -46,7 +49,8 @@ def scaled_to_original(input_file, old_size=(128, 128)):
 
     return scaled_dict
 
-def rescale(dim, new_size):
+
+def rescale(dim, new_size):  # function for calculating scaling factor for (x,y) of image labels
     x_scale = dim[0] / new_size[0]
     y_scale = dim[1] / new_size[1]
     return x_scale, y_scale

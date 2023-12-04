@@ -5,8 +5,9 @@
 # imports
 import argparse
 import math
-import os
 import random
+from datetime import time, datetime
+
 import numpy
 import torch
 from torchvision.transforms import Compose, ToTensor, transforms
@@ -57,6 +58,7 @@ test_loader = DataLoader(dataset=test_set, batch_size=int(args.batch_size), shuf
 
 
 def test():
+    start_time = datetime.now()
     model.eval()
     model.to(device)
 
@@ -97,6 +99,9 @@ def test():
 
                 e_dist = math.sqrt(((x2 - x1) ** 2 + (y2 - y1) ** 2))  # euclidean distance
                 distances += [e_dist]
+
+    end_time = datetime.now()
+    print(f'Average Time per Image {(end_time-start_time)/total_imgs}s')
 
     # pick 5 random images to show output for
     random_idx = []
